@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Splat Viewer</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Relative paths, so the site also works under https://<user>.github.io/<repo>/ -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/",
+        "@sparkjsdev/spark": "./vendor/spark/spark.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div class="status" id="status">
+    <div id="status-text">Loading…</div>
+    <div class="progress"><span id="bar"></span></div>
+  </div>
+  <div class="hint">Drag to orbit · scroll or pinch to zoom · right-drag or two fingers to pan</div>
+  <script src="js/viewer.js" type="module"></script>
+</body>
+</html>

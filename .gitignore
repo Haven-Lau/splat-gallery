@@ -1,0 +1,6 @@
+# Source PLYs stay out of the repo; only compressed .bgsz files are published.
+*.ply
+*.tmp
+__pycache__/
+.DS_Store
+Thumbs.db
