@@ -52,9 +52,9 @@ Keep each file well under 50 MB: GitHub warns above 50 MB and refuses files
 above 100 MB. Git LFS is not an option here, because GitHub Pages does not
 serve LFS files.
 
-`splats/mundo.bgsz` is `2DGS_hybrid/output/mundo_sparse2/recipe/point_cloud/
-iteration_11000/point_cloud_crop.ply` (148,427 splats, 36.8 MB) compressed to
-5.8 MB.
+`splats/mundo.bgsz` is `2DGS_hybrid/output/mundo_sparse2_best/best/point_cloud/
+iteration_11000/point_cloud_crop.ply` (445,404 splats, 110.5 MB) compressed to
+17.0 MB.
 
 ## Publish on GitHub Pages
 
