@@ -6,6 +6,10 @@ code and no build step.
 
 - Mouse: drag to orbit, scroll to zoom, right-drag to pan.
 - Touch: one finger to orbit, pinch to zoom, two fingers to pan.
+- Phones: the round arrow button (top right) turns gyro tilt on and off. While
+  it is on, tilting the phone turns the model (up to 35 degrees each way, zero
+  at the moment you press it). It only shows on touch devices, and needs HTTPS
+  (GitHub Pages is) or localhost.
 
 It uses the same renderer as trainctl's viewer: the Spark fork from
 `real-ty/spark` (with 2DGS surfels and the per-splat `beta` kernel) and

@@ -73,6 +73,74 @@ function worldRotation(up) {
   return align.multiply(FLIP);
 }
 
+// ---------------------------------------------------------------- gyro tilt
+//
+// On a phone, the rotate button turns the model with the phone: the model is
+// turned about the point we orbit (left/right tilt turns it about up, front/back
+// tilt nods it). The pose when the button is pressed is the zero point. The
+// turn is limited to +-TILT_MAX degrees so the model never goes all the way round.
+
+const IS_MOBILE = matchMedia("(pointer: coarse)").matches
+  || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS
+const TILT_MAX = 35;
+const TILT_SMOOTH = 0.15;
+
+const tilt = { on: false, base: null, yaw: 0, pitch: 0, yawNow: 0, pitchNow: 0, mesh: null, world: null, pivot: new THREE.Vector3() };
+
+function onOrientation(e) {
+  if (e.beta == null || e.gamma == null) return;
+  // In landscape the phone's axes swap.
+  const angle = (screen.orientation?.angle ?? window.orientation ?? 0) % 360;
+  let side = e.gamma, nod = e.beta;                     // portrait
+  if (angle === 90 || angle === -270) { side = e.beta; nod = -e.gamma; }
+  else if (angle === 270 || angle === -90) { side = -e.beta; nod = e.gamma; }
+  else if (angle === 180) { side = -e.gamma; nod = -e.beta; }
+  if (!tilt.base) tilt.base = { side, nod };
+  const clamp = (v) => THREE.MathUtils.clamp(v, -TILT_MAX, TILT_MAX);
+  tilt.yaw = clamp(side - tilt.base.side);
+  tilt.pitch = clamp(nod - tilt.base.nod);
+}
+
+function applyTilt() {
+  if (!tilt.mesh) return;
+  if (!tilt.on) { tilt.yawNow = tilt.pitchNow = 0; }
+  else {
+    tilt.yawNow += (tilt.yaw - tilt.yawNow) * TILT_SMOOTH;
+    tilt.pitchNow += (tilt.pitch - tilt.pitchNow) * TILT_SMOOTH;
+  }
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+  const q = new THREE.Quaternion().setFromAxisAngle(THREE_UP, THREE.MathUtils.degToRad(tilt.yawNow))
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(right, THREE.MathUtils.degToRad(tilt.pitchNow)));
+  tilt.mesh.quaternion.copy(q).multiply(tilt.world);
+  tilt.mesh.position.copy(tilt.pivot).sub(tilt.pivot.clone().applyQuaternion(q));   // turn about the pivot
+}
+
+async function toggleTilt() {
+  const button = $("tilt");
+  if (tilt.on) {
+    tilt.on = false;
+    window.removeEventListener("deviceorientation", onOrientation);
+  } else {
+    // iOS only gives sensor data after a permission prompt from a tap.
+    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+      try {
+        if (await DeviceOrientationEvent.requestPermission() !== "granted") return;
+      } catch { return; }
+    }
+    tilt.base = null;
+    tilt.yaw = tilt.pitch = 0;
+    tilt.on = true;
+    window.addEventListener("deviceorientation", onOrientation);
+  }
+  button.setAttribute("aria-pressed", String(tilt.on));
+}
+
+if (IS_MOBILE && "DeviceOrientationEvent" in window) {
+  $("tilt").hidden = false;
+  $("tilt").addEventListener("click", toggleTilt);
+}
+
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -83,6 +151,8 @@ resize();
 
 renderer.setAnimationLoop(() => {
   controls.update();
+  camera.updateMatrixWorld();
+  applyTilt();
   renderer.render(scene, camera);
 });
 
@@ -191,6 +261,9 @@ async function main() {
 
   const { target, radius } = splatBounds(mesh);
   frame(target.applyQuaternion(world), radius, view, world);
+  tilt.mesh = mesh;
+  tilt.world = world;
+  tilt.pivot.copy(controls.target);
   $("status").classList.add("hidden");
 }
 
